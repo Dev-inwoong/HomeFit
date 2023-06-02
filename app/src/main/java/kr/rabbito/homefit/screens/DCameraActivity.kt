@@ -5,8 +5,6 @@ import android.content.Context
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Rect
-import android.graphics.BitmapFactory
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Bundle
@@ -23,8 +21,6 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
-import kr.rabbito.homefit.R
 import kr.rabbito.homefit.client.HomeFitClient
 import kr.rabbito.homefit.databinding.ActivityDcameraBinding
 import kr.rabbito.homefit.utils.calc.Converter
@@ -204,6 +200,7 @@ class DCameraActivity : AppCompatActivity() {
                             Toast.makeText(this@DCameraActivity, "서버 연결에 실패했습니다.\n연결 상태를 확인해주세요.", Toast.LENGTH_SHORT).show()
                         }
 
+
                         runOnUiThread {
                             binding.dcameraClLoading.visibility = View.INVISIBLE
                         }
@@ -213,6 +210,7 @@ class DCameraActivity : AppCompatActivity() {
                             intent.putExtra("VIEW_PAGER_INDEX", 1)
                             intent.putExtra("DATA", data)
                             startActivity(intent)
+                        } else {
                             finish()
                         }
                     }.start()
