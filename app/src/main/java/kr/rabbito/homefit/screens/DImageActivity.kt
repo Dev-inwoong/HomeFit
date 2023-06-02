@@ -1,14 +1,20 @@
 package kr.rabbito.homefit.screens
 
+import android.content.Context
 import android.content.Intent
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import kr.rabbito.homefit.client.HomeFitClient
+import kr.rabbito.homefit.databinding.ActivityDaddBinding
+import kr.rabbito.homefit.databinding.ActivityDcameraBinding
 import kr.rabbito.homefit.databinding.ActivityDimageBinding
 import kr.rabbito.homefit.utils.calc.Converter
+import kotlin.math.atan
 
 class DImageActivity : AppCompatActivity() {
     private var mBinding: ActivityDimageBinding? = null
@@ -70,8 +76,10 @@ class DImageActivity : AppCompatActivity() {
         }.start()
     }
 
+    }
     override fun onDestroy() {
         client?.closeSocket()
         super.onDestroy()
     }
+
 }

@@ -23,7 +23,6 @@ class DAddTypeSelectActivity : AppCompatActivity() {
             if (uri != null) {
                 val intent = Intent(this, DImageActivity::class.java)
                 intent.putExtra("SELECTED_IMAGE", uri.toString())
-
                 startActivity(intent)
             }
         }

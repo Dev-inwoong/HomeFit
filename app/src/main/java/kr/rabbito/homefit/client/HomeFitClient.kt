@@ -13,7 +13,7 @@ import java.net.Socket
 import java.net.SocketException
 
 class HomeFitClient {
-    private var serverIP = "192.168.35.69"
+    private var serverIP = "192.168.142.156"
     private var serverPort = 10001
 
     lateinit var socket: Socket
@@ -58,6 +58,11 @@ class HomeFitClient {
         } catch (e: UninitializedPropertyAccessException) {
             Log.d("connection", "image send failed")
         }
+    }
+
+    fun sendCameraInfo(info : String){
+        val message = makeMessage(3, info)
+        outputStream.write(message)
     }
 
     // 메시지 수신
