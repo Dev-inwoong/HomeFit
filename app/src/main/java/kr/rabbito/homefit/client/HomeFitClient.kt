@@ -13,7 +13,7 @@ import java.net.Socket
 import java.net.SocketException
 
 class HomeFitClient {
-    private var serverIP = "122.38.179.73"
+    private var serverIP = "192.168.142.32"
     private var serverPort = 10001
 
     lateinit var socket: Socket
@@ -50,6 +50,8 @@ class HomeFitClient {
     fun sendImage(context: Context, bitmap: Bitmap) {
         val resizedBitmap = Converter.resizeBitmap(bitmap)
         val imageByteArray = Converter.bitmapToByteArray(resizedBitmap, "jpeg")
+
+        //val imageByteArray = Converter.bitmapToByteArray(bitmap, "jpeg")
 
         val message = makeMessage(2, imageByteArray)
         try {

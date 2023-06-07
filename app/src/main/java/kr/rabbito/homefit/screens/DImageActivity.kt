@@ -57,11 +57,13 @@ class DImageActivity : AppCompatActivity() {
 
                 val startTime = System.currentTimeMillis()
 
+                client!!.sendCameraInfo(cameraInfo)
+
                 client!!.sendImage(this@DImageActivity, bitmap)
                 val data: String? = client!!.getData(this@DImageActivity)
 
 
-                client!!.sendCameraInfo(cameraInfo)
+
 
                 val endTime = System.currentTimeMillis()
                 Log.d("time gap", (endTime - startTime).toString())
@@ -105,8 +107,7 @@ class DImageActivity : AppCompatActivity() {
                     "후면 카메라\nid : ${cameraId}\n렌즈 초점 거리 : ${focalLength[0]}\n센서 크기 : $physicalSize\n 카메라 픽셀 사이즈 : $pixelArraySize\n 수직 화각 : $verticalAngle\n 수평 화각 : $horizontalAngle\n 숟가락 사이즈 : $spoonSize"
                 )
                 cameraInfo = "${focalLength[0]} ${physicalSize.width} ${pixelArraySize.width} ${pixelArraySize.height} $verticalAngle $horizontalAngle $spoonSize"
-            }else{
-                cameraInfo = "0 0 0 0 0 0 0"
+                return cameraInfo
             }
         }
         return cameraInfo
