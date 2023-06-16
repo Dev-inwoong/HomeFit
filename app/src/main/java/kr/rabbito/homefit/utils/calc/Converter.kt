@@ -14,12 +14,12 @@ import java.util.Locale
 class Converter {
     companion object {
         fun resizeBitmap(bitmap: Bitmap): Bitmap {
-            val newWidth: Int = bitmap.width / 8
-            val newHeight: Int = bitmap.height / 8
+//            val newWidth: Int = bitmap.width / 8
+//            val newHeight: Int = bitmap.height / 8
+//
+//            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
 
-            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
-
-            return resizedBitmap
+            return bitmap
         }
 
         fun bitmapToByteArray(bitmap: Bitmap, ext: String): ByteArray {
