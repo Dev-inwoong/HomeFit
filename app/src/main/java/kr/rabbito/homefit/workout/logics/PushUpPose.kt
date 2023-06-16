@@ -1,12 +1,15 @@
 package kr.rabbito.homefit.workout.logics
 
+import android.content.Context
 import android.util.Log
 import kr.rabbito.homefit.workout.WorkoutState
 import kr.rabbito.homefit.workout.poseDetection.PoseGraphic
 import kr.rabbito.homefit.workout.poseDetection.PoseGraphic.Companion.redPaint
 import kr.rabbito.homefit.workout.poseDetection.PoseGraphic.Companion.whitePaint
+import kr.rabbito.homefit.workout.tts.PoseAdviceTTS
 
-class PushUpPose: WorkoutPose() {
+class PushUpPose(context: Context, tts: PoseAdviceTTS): WorkoutPose(context, tts) {
+    private var ttsFlag : Boolean = false
 
     override fun guidePose(c: PoseCoordinate) {
         try {
@@ -24,6 +27,13 @@ class PushUpPose: WorkoutPose() {
             } else {
                 PoseGraphic.leftShoulderToLeftElbowPaint = whitePaint
                 PoseGraphic.leftElbowToLeftWristPaint = whitePaint
+            }
+
+            if(!ttsFlag
+                && getYDistance(c.rightHand, c.rightShoulder) <= 0
+                && getYDistance(c.leftHand, c.leftShoulder) <= 0){
+                tts.raiseUpperbodyTTS()
+                ttsFlag = true
             }
 
             /*if (!WorkoutState.isUp) { // 내려가는 시점
@@ -66,6 +76,9 @@ class PushUpPose: WorkoutPose() {
                 WorkoutState.totalCount += 1
                 WorkoutState.isUp = false
 
+                ttsFlag = false
+                tts.countTTS(WorkoutState.count)// 운동 횟수 카운트 tts
+
                 checkSetCondition()
                 checkEnd()
             } else if (
@@ -90,6 +103,10 @@ class PushUpPose: WorkoutPose() {
             WorkoutState.set += 1
             WorkoutState.mySet.value = (WorkoutState.mySet.value!!) + 1 // 임시 live data 증가 코드
             Log.d("디버깅","mySet plus 1 : ${WorkoutState.mySet.value}")
+
+            if (!(WorkoutState.set == WorkoutState.setTotal + 1)){
+                tts.countSetTTS(WorkoutState.set) // 세트 수 증가 tts
+            }
         }
     }
 
@@ -99,6 +116,8 @@ class PushUpPose: WorkoutPose() {
         if (WorkoutState.set == WorkoutState.setTotal + 1) {
             // 운동 종료
             Log.d("push_up", "finish")
+
+            tts.WorkoutFinish() // 운동 종료 tts
         }
     }
 }

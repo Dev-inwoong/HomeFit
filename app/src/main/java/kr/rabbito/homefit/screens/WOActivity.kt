@@ -3,6 +3,8 @@ package kr.rabbito.homefit.screens
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -26,34 +28,40 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 class WOActivity : AppCompatActivity() {
+    companion object {
+        private const val POSE_DETECTION = "Pose Detection"
+        private const val TAG = "WOActivity"
+    }
+
     private var mBinding: ActivityWoBinding? = null
     private val binding get() = mBinding!!
     private var cameraSource: CameraSource? = null
     private var selectedModel = POSE_DETECTION
     private lateinit var mat: android.opengl.Matrix
     private var workoutState = WorkoutState()
-    private var tts: PoseAdviceTTS? = null
-    private lateinit var countdownTimer : CountDownTimer
+    private lateinit var countdownTimer: CountDownTimer
     private var restStartTime = 0L
     private var workoutIdx = 0
     private val woStartTime = LocalDateTime.now().format(timeFormatter)
+    private lateinit var tts: PoseAdviceTTS
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mBinding = ActivityWoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 음성 안내 객체 생성
+        tts = PoseAdviceTTS(this)
+
         createCameraSource(selectedModel)
         cameraSource?.setFacing(CameraSource.CAMERA_FACING_FRONT)
-
-        // tts 출력 위한 부분 - 추후 로직 검사 파일로 이동시킬 수도 있음
-        tts = PoseAdviceTTS(this)
 
         /*
         구상: 특정 운동 타일 선택해 넘어오면, intent 이용해서 운동 인덱스 전달됨 -> 해당 인덱스로 initView 호출
          */
 
         // 임시
-        workoutIdx = intent.getIntExtra("index", 0)
+        workoutIdx = intent.getIntExtra("workoutIndex", 0)
 
         // 운동에 맞게 화면 초기화, 위젯 제시
         initView(workoutIdx)
@@ -62,22 +70,25 @@ class WOActivity : AppCompatActivity() {
         binding.woPvPreviewView.stop()
         startCameraSource()
 
+        // 음성 출력 간격 조절
+        startTTSDelay()
+
         // 운동 정지 버튼
         binding.woBtnPause.setOnClickListener {
             WorkoutState.rest = !WorkoutState.rest
-            if(WorkoutState.rest){  // 휴식 상태일 때
+            if (WorkoutState.rest) {  // 휴식 상태일 때
                 countdownTimer.cancel() // 타이머 일시정지
                 restStartTime = System.currentTimeMillis() // 휴식시작 시간 저장
-                WorkoutState.remainSec.value = 120*1000L - WorkoutState.elapSec.value!! // '남은시간' = 2분 - '경과시간'
-            }
-            else{
+                WorkoutState.remainSec.value =
+                    120 * 1000L - WorkoutState.elapSec.value!! // '남은시간' = 2분 - '경과시간'
+            } else {
                 WorkoutState.totalRestTime += System.currentTimeMillis() - restStartTime    // 총 휴식시간 계산
                 startTimer()    // 타이머 재개
             }
         }
         // 운동 종료 버튼
         binding.woBtnStop.setOnClickListener {
-            if(WorkoutState.rest){
+            if (WorkoutState.rest) {
                 WorkoutState.totalRestTime += System.currentTimeMillis() - restStartTime
             }
             countdownTimer.cancel()
@@ -92,8 +103,8 @@ class WOActivity : AppCompatActivity() {
 //        }
 
         // 운동 세트 충족시 운동 종료
-        WorkoutState.mySet.observe(this, Observer{
-            if(it == WorkoutState.setTotal+1){
+        WorkoutState.mySet.observe(this, Observer {
+            if (it == WorkoutState.setTotal + 1) {
                 countdownTimer.cancel()
                 startNextActivity()
             }
@@ -128,6 +139,7 @@ class WOActivity : AppCompatActivity() {
                     true,
                     binding,
                     workoutIdx,
+                    tts
                 )
             )
 
@@ -172,7 +184,7 @@ class WOActivity : AppCompatActivity() {
          */
 
         // 선택한 운동에 맞게 위젯 로드
-        val workoutView: WorkoutView = WorkoutCore(this, binding).workoutViews[workoutIdx]
+        val workoutView: WorkoutView = WorkoutCore(this, binding, tts).workoutViews[workoutIdx]
         workoutView.generateWidgets()
 
         // 기본 위젯 로드
@@ -182,7 +194,7 @@ class WOActivity : AppCompatActivity() {
         WorkoutState.set = 1
         WorkoutState.mySet.value = 1    // 임시 livedata 초기화
         WorkoutState.elapSec.value = 0  // 경과 시간 초기화
-        WorkoutState.remainSec.value = 120*1000L  // 남은 시간 초기화
+        WorkoutState.remainSec.value = 120 * 1000L  // 남은 시간 초기화
 
         binding.woTvTitle.text = WorkoutData.workoutNamesKOR[workoutIdx]
         binding.woTvSet.text = WorkoutState.setTotal.toString()
@@ -195,7 +207,7 @@ class WOActivity : AppCompatActivity() {
 //            String.format("%02d:%02d:%02d", remainTime[0], remainTime[1], remainTime[2])
     }
 
-//    private fun startTimer() {
+    //    private fun startTimer() {
 //        timer(period = 1000) {
 //            runOnUiThread {
 //                Log.d("타이머","$debugging")
@@ -211,10 +223,10 @@ class WOActivity : AppCompatActivity() {
 //            }
 //        }
 //    }
-    private fun startTimer(){
+    private fun startTimer() {
         val timeFormat = SimpleDateFormat("HH:mm:ss")
 
-        countdownTimer = object : CountDownTimer(WorkoutState.remainSec.value!!,1000){
+        countdownTimer = object : CountDownTimer(WorkoutState.remainSec.value!!, 1000) {
             override fun onTick(millisUntilFinished: Long) {    // 1초마다 호출되는 함수
                 // 기능1 : 남은시간, 경과시간 계산
                 // 기능2 : 남은시간, 경과시간 텍스트 수정
@@ -230,8 +242,29 @@ class WOActivity : AppCompatActivity() {
             }
         }.start()
     }
-    private fun startNextActivity(){
-        val newWorkout = Workout(null, WorkoutData.workoutNamesKOR[workoutIdx], WorkoutState.setTotal, WorkoutState.totalCount, WorkoutState.elapSec.value, LocalDate.now(), woStartTime, WorkoutState.totalRestTime)
+
+    private fun startTTSDelay() {
+        val handler = Handler(Looper.getMainLooper())
+        val runnable: Runnable = object : Runnable {
+            override fun run() {
+                if (WorkoutState.ttsDelay < WorkoutState.ttsDelayLimit) WorkoutState.ttsDelay++
+                handler.postDelayed(this, 1000)
+            }
+        }
+        handler.post(runnable)
+    }
+
+    private fun startNextActivity() {
+        val newWorkout = Workout(
+            null,
+            WorkoutData.workoutNamesKOR[workoutIdx],
+            WorkoutState.setTotal,
+            WorkoutState.totalCount,
+            WorkoutState.elapSec.value,
+            LocalDate.now(),
+            woStartTime,
+            WorkoutState.totalRestTime
+        )
         val intent = Intent(this, WOReportActivity::class.java)
         intent.putExtra("index", workoutIdx)
         intent.putExtra("workout", newWorkout)
@@ -239,6 +272,7 @@ class WOActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
     public override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume")
@@ -262,10 +296,6 @@ class WOActivity : AppCompatActivity() {
         if (cameraSource != null) {
             cameraSource?.release()
         }
-    }
-
-    companion object {
-        private const val POSE_DETECTION = "Pose Detection"
-        private const val TAG = "WOActivity"
+        tts.finish()
     }
 }

@@ -27,7 +27,13 @@ class WOHistoryViewHolder(private val binding: WohistoryItemBinding)
         val timeFormatter = DateTimeFormatter.ofPattern("a h시 mm분").withLocale(Locale.forLanguageTag("ko"))
         val workoutTime = workout.time?.format(timeFormatter)
 
-        binding.wohistoryItemTvWorkname.text = workout.workoutName // 글자 수 일정 이상일 경우 사이즈 감소 구현
+        if (workout.workoutName!!.length > 8){
+            binding.wohistoryItemTvWorkname.setTextSize(2, 18f)
+            binding.wohistoryItemTvWorkname.text = "사이드\n레터럴 레이즈"
+        }
+        else {
+            binding.wohistoryItemTvWorkname.text = workout.workoutName // 글자 수 일정 이상일 경우 사이즈 감소 구현
+        }
         binding.wohistoryItemTvDate.text = workoutDate
         binding.wohistoryItemTvTime.text = workoutTime
     }
@@ -35,7 +41,7 @@ class WOHistoryViewHolder(private val binding: WohistoryItemBinding)
     override fun onClick(v: View?) {
         if (this.workout != null) {
             val intent = Intent(itemView.context, WOReportActivity::class.java).apply {
-                putExtra("workout", workout)
+                putExtra("workout", workout) // DB workout 객체
             }
             itemView.context.startActivity(intent)
         }

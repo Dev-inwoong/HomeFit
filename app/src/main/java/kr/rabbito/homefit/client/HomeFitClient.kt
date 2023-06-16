@@ -13,7 +13,7 @@ import java.net.Socket
 import java.net.SocketException
 
 class HomeFitClient {
-    private var serverIP = "192.168.142.32"
+    private var serverIP = "192.168.35.69"
     private var serverPort = 10001
 
     lateinit var socket: Socket
